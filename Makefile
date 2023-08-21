@@ -19,7 +19,7 @@ build:
 .PHONY: release
 release:
 	go build -ldflags=$(BUILD_LDFLAGS) -o $(BIN) .
-	zip -r $(BIN)-$(GOOS)-$(VERSION).zip $(BIN)
+	zip -r feed2bsky-$(GOOS)-$(VERSION).zip $(BIN)
 
 .PHONY: install
 install:
