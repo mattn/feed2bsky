@@ -1,9 +1,10 @@
 name: Release
-
 on:
   push:
     tags:
     - 'v*'
+env:
+  GO_VERSION: stable
 
 jobs:
   build_for_linux:
