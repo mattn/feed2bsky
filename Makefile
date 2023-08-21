@@ -1,7 +1,11 @@
 BIN := feed2bsky
+ifeq ($(OS),Windows_NT)
+BIN := $(BIN).exe
+endif
 VERSION := $$(make -s show-version)
 CURRENT_REVISION := $(shell git rev-parse --short HEAD)
 BUILD_LDFLAGS := "-s -w -X main.revision=$(CURRENT_REVISION)"
+GOOS := $(shell go env GOOS)
 GOBIN ?= $(shell go env GOPATH)/bin
 export GO111MODULE=on
 
@@ -15,7 +19,7 @@ build:
 .PHONY: release
 release:
 	go build -ldflags=$(BUILD_LDFLAGS) -o $(BIN) .
-	zip -r feed2bsky-$(GOOS)-$(VERSION).zip $(BIN)
+	zip -r $(BIN)-$(GOOS)-$(VERSION).zip $(BIN)
 
 .PHONY: install
 install:
@@ -28,20 +32,12 @@ show-version: $(GOBIN)/gobump
 $(GOBIN)/gobump:
 	go install github.com/x-motemen/gobump/cmd/gobump@latest
 
-.PHONY: cross
-cross: $(GOBIN)/goxz
-	goxz -n $(BIN) -pv=v$(VERSION) -build-ldflags=$(BUILD_LDFLAGS) .
-
-$(GOBIN)/goxz:
-	go install github.com/Songmu/goxz/cmd/goxz@latest
-
 .PHONY: test
 test: build
 	go test -v ./...
 
 .PHONY: clean
 clean:
-	rm -rf $(BIN) goxz
 	go clean
 
 .PHONY: bump
@@ -57,10 +53,3 @@ endif
 	git tag "v$(VERSION)"
 	git push origin main
 	git push origin "refs/tags/v$(VERSION)"
-
-.PHONY: upload
-upload: $(GOBIN)/ghr
-	ghr "v$(VERSION)" goxz
-
-$(GOBIN)/ghr:
-	go install github.com/tcnksm/ghr@latest
