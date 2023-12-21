@@ -1,6 +1,8 @@
 module github.com/mattn/feed2bsky
 
-go 1.20
+go 1.21.0
+
+toolchain go1.21.1
 
 require (
 	github.com/lib/pq v1.10.9
@@ -40,7 +42,7 @@ require (
 )
 
 require (
-	github.com/PuerkitoBio/goquery v1.8.0 // indirect
+	github.com/PuerkitoBio/goquery v1.8.0
 	github.com/andybalholm/cascadia v1.3.1 // indirect
 	github.com/bluesky-social/indigo v0.0.0-20230516230630-e5830d92f1ff
 	github.com/gogo/protobuf v1.3.2 // indirect
