@@ -191,6 +191,8 @@ func main() {
 	var dsn string
 	var feedURL string
 	var format string
+	var pattern string
+	var re *regexp.Regexp
 	var cfg config
 	var ver bool
 
@@ -198,6 +200,7 @@ func main() {
 	flag.StringVar(&dsn, "dsn", os.Getenv("FEED2BSKY_DSN"), "Database source")
 	flag.StringVar(&feedURL, "feed", "", "Feed URL")
 	flag.StringVar(&format, "format", "{{.Title}}\n{{.Link}}", "Tweet Format")
+	flag.StringVar(&pattern, "pattern", "", "Match pattern")
 	flag.StringVar(&cfg.Host, "host", os.Getenv("FEED2BSKY_HOST"), "Bluesky host")
 	flag.StringVar(&cfg.Handle, "handle", os.Getenv("FEED2BSKY_HANDLE"), "Bluesky handle")
 	flag.StringVar(&cfg.Password, "password", os.Getenv("FEED2BSKY_PASSWORD"), "Bluesky password")
@@ -207,6 +210,14 @@ func main() {
 	if ver {
 		fmt.Println(version)
 		os.Exit(0)
+	}
+
+	var err error
+	if pattern != "" {
+		re, err = regexp.Compile(pattern)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	t := template.Must(template.New("").Parse(format))
@@ -258,10 +269,18 @@ func main() {
 			log.Println(err)
 			continue
 		}
+
+		if re != nil {
+			if !re.MatchString(buf.String()) {
+				continue
+			}
+		}
+
 		if skip {
 			log.Printf("%q", buf.String())
 			continue
 		}
+
 		err = doPost(&cfg, buf.String())
 		if err != nil {
 			log.Println(err)
