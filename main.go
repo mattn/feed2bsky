@@ -19,8 +19,8 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	comatproto "github.com/bluesky-social/indigo/api/atproto"
 	"github.com/bluesky-social/indigo/api/bsky"
-	cliutil "github.com/bluesky-social/indigo/cmd/gosky/util"
 	lexutil "github.com/bluesky-social/indigo/lex/util"
+	cliutil "github.com/bluesky-social/indigo/util/cliutil"
 	"github.com/bluesky-social/indigo/xrpc"
 	_ "github.com/lib/pq"
 	"github.com/mmcdole/gofeed"
@@ -56,20 +56,35 @@ type entry struct {
 
 const (
 	urlPattern = `https?://[-A-Za-z0-9+&@#\/%?=~_|!:,.;\(\)]+`
+	tagPattern = `\B#\S+`
 )
 
 var (
 	urlRe = regexp.MustCompile(urlPattern)
+	tagRe = regexp.MustCompile(tagPattern)
 )
 
-func extractLinks(text string) []entry {
+func extractLinksBytes(text string) []entry {
 	var result []entry
 	matches := urlRe.FindAllStringSubmatchIndex(text, -1)
 	for _, m := range matches {
 		result = append(result, entry{
 			text:  text[m[0]:m[1]],
-			start: int64(len([]rune(text[0:m[0]]))),
-			end:   int64(len([]rune(text[0:m[1]])))},
+			start: int64(len(text[0:m[0]])),
+			end:   int64(len(text[0:m[1]]))},
+		)
+	}
+	return result
+}
+
+func extractTagsBytes(text string) []entry {
+	var result []entry
+	matches := tagRe.FindAllStringSubmatchIndex(text, -1)
+	for _, m := range matches {
+		result = append(result, entry{
+			text:  strings.TrimPrefix(text[m[0]:m[1]], "#"),
+			start: int64(len(text[0:m[0]])),
+			end:   int64(len(text[0:m[1]]))},
 		)
 	}
 	return result
@@ -154,7 +169,7 @@ func doPost(cfg *config, text string) error {
 		CreatedAt: time.Now().Local().Format(time.RFC3339),
 	}
 
-	for _, entry := range extractLinks(text) {
+	for _, entry := range extractLinksBytes(text) {
 		post.Entities = append(post.Entities, &bsky.FeedPost_Entity{
 			Index: &bsky.FeedPost_TextSlice{
 				Start: entry.start,
@@ -169,6 +184,22 @@ func doPost(cfg *config, text string) error {
 		if post.Embed.EmbedExternal == nil {
 			addLink(xrpcc, post, entry.text)
 		}
+	}
+
+	for _, entry := range extractTagsBytes(text) {
+		post.Facets = append(post.Facets, &bsky.RichtextFacet{
+			Features: []*bsky.RichtextFacet_Features_Elem{
+				{
+					RichtextFacet_Tag: &bsky.RichtextFacet_Tag{
+						Tag: entry.text,
+					},
+				},
+			},
+			Index: &bsky.RichtextFacet_ByteSlice{
+				ByteStart: entry.start,
+				ByteEnd:   entry.end,
+			},
+		})
 	}
 
 	resp, err := comatproto.RepoCreateRecord(context.TODO(), xrpcc, &comatproto.RepoCreateRecord_Input{
