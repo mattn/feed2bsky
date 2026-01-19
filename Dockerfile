@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.4
 
-FROM golang:1.22-alpine3.18 AS build-dev
+FROM golang:1.25-alpine3.18 AS build-dev
 WORKDIR /go/src/app
 COPY --link go.mod go.sum ./
 RUN apk --update add --no-cache upx gcc musl-dev || \

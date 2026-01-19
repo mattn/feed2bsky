@@ -230,7 +230,7 @@ func main() {
 	flag.BoolVar(&skip, "skip", false, "Skip tweet")
 	flag.StringVar(&dsn, "dsn", os.Getenv("FEED2BSKY_DSN"), "Database source")
 	flag.StringVar(&feedURL, "feed", "", "Feed URL")
-	flag.StringVar(&format, "format", "{{.Title}}\n{{.Link}}", "Tweet Format")
+	flag.StringVar(&format, "format", "{{.Title | normalize}}\n{{.Link}}", "Tweet Format")
 	flag.StringVar(&pattern, "pattern", "", "Match pattern")
 	flag.StringVar(&cfg.Host, "host", os.Getenv("FEED2BSKY_HOST"), "Bluesky host")
 	flag.StringVar(&cfg.Handle, "handle", os.Getenv("FEED2BSKY_HANDLE"), "Bluesky handle")
@@ -251,7 +251,15 @@ func main() {
 		}
 	}
 
-	t := template.Must(template.New("").Parse(format))
+	funcMap := template.FuncMap{
+		"normalize": func(s string) string {
+			// Remove invisible Unicode characters and squeeze multiple newlines
+			s = regexp.MustCompile(`[\p{Cf}]`).ReplaceAllString(s, "")
+			s = regexp.MustCompile(`\n\n+`).ReplaceAllString(s, "\n")
+			return s
+		},
+	}
+	t := template.Must(template.New("").Funcs(funcMap).Parse(format))
 
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
@@ -301,18 +309,20 @@ func main() {
 			continue
 		}
 
+		content := buf.String()
+
 		if re != nil {
-			if !re.MatchString(buf.String()) {
+			if !re.MatchString(content) {
 				continue
 			}
 		}
 
 		if skip {
-			log.Printf("%q", buf.String())
+			log.Printf("%q", content)
 			continue
 		}
 
-		err = doPost(&cfg, buf.String())
+		err = doPost(&cfg, content)
 		if err != nil {
 			log.Println(err)
 			continue
