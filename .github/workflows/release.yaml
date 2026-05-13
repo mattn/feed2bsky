@@ -57,7 +57,7 @@ jobs:
         GOARCH: amd64
       run: make release
     - name: Archive artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v7
       with:
         name: dist-darwin
         path: feed2bsky-darwin-*.zip
