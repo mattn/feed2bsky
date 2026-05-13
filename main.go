@@ -31,7 +31,7 @@ import (
 
 const name = "feed2bsky"
 
-const version = "0.0.15"
+const version = "0.0.16"
 
 var revision = "HEAD"
 
