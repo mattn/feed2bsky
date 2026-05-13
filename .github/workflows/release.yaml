@@ -17,11 +17,11 @@ jobs:
         sudo apt-get install -y --no-install-recommends \
           build-essential
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v6
       with:
         fetch-depth: 0
     - name: Setup Go
-      uses: actions/setup-go@v4
+      uses: actions/setup-go@v6
       with:
         go-version: ${{ env.GO_VERSION }}
     - name: Build amd64
@@ -31,7 +31,7 @@ jobs:
         GOARCH: amd64
       run: make release
     - name: Archive artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v7
       with:
         name: dist-linux
         path: feed2bsky-linux-*.zip
@@ -43,11 +43,11 @@ jobs:
     - name: Install build dependencies
       run: brew install coreutils
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v6
       with:
         fetch-depth: 0
     - name: Setup Go
-      uses: actions/setup-go@v4
+      uses: actions/setup-go@v6
       with:
         go-version: ${{ env.GO_VERSION }}
     - name: Build amd64
@@ -69,11 +69,11 @@ jobs:
     - name: Install build dependencies
       run: choco install zip
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v6
       with:
         fetch-depth: 0
     - name: Setup Go
-      uses: actions/setup-go@v4
+      uses: actions/setup-go@v6
       with:
         go-version: ${{ env.GO_VERSION }}
     - name: Build amd64
@@ -84,7 +84,7 @@ jobs:
         GOARCH: amd64
       run: make release
     - name: Archive artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v7
       with:
         name: dist-windows
         path: feed2bsky-windows-*.zip
@@ -98,9 +98,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v8
       - name: Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v3
         if: startsWith(github.ref, 'refs/tags/')
         with:
           name: feed2bsky ${{ github.ref_name }}
